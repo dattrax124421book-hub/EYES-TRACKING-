@@ -1,0 +1,96 @@
+name: Build & Release Android APK
+
+on:
+  push:
+    branches:
+      - '**'
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - '**'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Prepare Keystore and Environment
+        run: |
+          # Recreate debug keystore from base64 if not already present
+          if [ -f "debug.keystore.base64" ] && [ ! -f "debug.keystore" ]; then
+            echo "Decoding debug.keystore from base64..."
+            base64 -d debug.keystore.base64 > debug.keystore
+          fi
+
+          # Ensure .env file exists for secrets plugin
+          if [ ! -f ".env" ]; then
+            if [ -f ".env.example" ]; then
+              echo "Creating .env from .env.example..."
+              cp .env.example .env
+            else
+              touch .env
+            fi
+          fi
+
+      - name: Grant execute permission for Gradle wrapper
+        run: chmod +x ./gradlew
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Rename APK with commit hash
+        id: apk_rename
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          BUILD_NAME="EyeGesture-debug-${SHORT_SHA}.apk"
+          if [ -f "app/build/outputs/apk/debug/app-debug.apk" ]; then
+            cp "app/build/outputs/apk/debug/app-debug.apk" "app/build/outputs/apk/debug/${BUILD_NAME}"
+            echo "apk_file=app/build/outputs/apk/debug/${BUILD_NAME}" >> $GITHUB_OUTPUT
+            echo "apk_name=${BUILD_NAME}" >> $GITHUB_OUTPUT
+          else
+            echo "apk_file=app/build/outputs/apk/debug/app-debug.apk" >> $GITHUB_OUTPUT
+            echo "apk_name=app-debug.apk" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload APK as Workflow Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EyeGesture-Debug-APK
+          path: ${{ steps.apk_rename.outputs.apk_file }}
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Create GitHub Release on Tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.apk_rename.outputs.apk_file }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

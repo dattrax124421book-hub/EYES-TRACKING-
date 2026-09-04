@@ -1,0 +1,6 @@
+{
+  "name": "EyeGesture",
+  "description": "On-device eye gesture automation app for hands-free device control and shortcuts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

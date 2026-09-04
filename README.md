@@ -1,11 +1,33 @@
-<div align="center">
+# EyeGesture — Eye-Tracking Automation for Android
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+EyeGesture is an on-device eye tracking and facial gesture automation app built with Kotlin, Jetpack Compose, CameraX, and Google ML Kit Face Detection.
 
-  <h1>Built with AI Studio</h2>
+## Automated APK Build via GitHub Actions
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+This repository includes a pre-configured GitHub Actions CI workflow (`.github/workflows/build-apk.yml`).
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+### How It Works:
+1. **Push to GitHub**: Push your commits to any branch or create a pull request.
+2. **Instant Build**: The workflow automatically triggers, sets up JDK 21 and the Android SDK, restores the debug signing key, and executes `./gradlew assembleDebug`.
+3. **Download APK**:
+   - Go to the **Actions** tab on your GitHub repository.
+   - Click the latest workflow run.
+   - Scroll down to the **Artifacts** section and download `EyeGesture-Debug-APK`.
+4. **Releases**: Creating a git tag like `v1.0.0` will automatically create a GitHub Release with the APK attached.
 
-</div>
+## Local Development
+
+```bash
+# Clone the repository
+git clone <your-repo-url>
+cd <repo-folder>
+
+# Build the debug APK
+./gradlew assembleDebug
+
+# Run unit tests
+./gradlew testDebugUnitTest
+```
+
+The compiled APK will be located at:
+`app/build/outputs/apk/debug/app-debug.apk`
