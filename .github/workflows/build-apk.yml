@@ -48,8 +48,9 @@ jobs:
           # Recreate debug keystore from base64 if not already present
           if [ -f "debug.keystore.base64" ] && [ ! -f "debug.keystore" ]; then
             echo "Decoding debug.keystore from base64..."
-            base64 -d debug.keystore.base64 > debug.keystore
+            base64 -d debug.keystore.base64 > debug.keystore || base64 --decode debug.keystore.base64 > debug.keystore
           fi
+          ls -la debug.keystore || echo "Warning: debug.keystore not found"
 
           # Ensure .env file exists for secrets plugin
           if [ ! -f ".env" ]; then
@@ -59,6 +60,13 @@ jobs:
             else
               touch .env
             fi
+          fi
+
+          # Verify google-services.json exists
+          if [ -f "app/google-services.json" ]; then
+            echo "app/google-services.json is present."
+          else
+            echo "Warning: app/google-services.json missing"
           fi
 
       - name: Grant execute permission for Gradle wrapper
