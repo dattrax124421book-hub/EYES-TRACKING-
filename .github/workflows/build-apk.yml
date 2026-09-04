@@ -38,6 +38,11 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Accept Android SDK Licenses & Setup Platform
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools" || true
+
       - name: Prepare Keystore and Environment
         run: |
           # Recreate debug keystore from base64 if not already present
@@ -60,7 +65,9 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace
+        env:
+          JAVA_OPTS: "-Djava.awt.headless=true -Xmx3g"
+        run: ./gradlew assembleDebug --no-configuration-cache --stacktrace
 
       - name: Rename APK with commit hash
         id: apk_rename
